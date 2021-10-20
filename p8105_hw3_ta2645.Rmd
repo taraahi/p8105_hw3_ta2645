@@ -1,0 +1,124 @@
+---
+title: "P8105 Homework 3"
+author: "Tara Ahi"
+date: "10/19/2021"
+output: github_document
+---
+
+```{r setup, message = FALSE}
+
+library(tidyverse)
+library(p8105.datasets)
+library(httr)
+library(jsonlite)
+
+```
+
+# Problem 1
+
+## Instacart
+
+Most popular aisles and number of items ordered:
+
+```{r, aisle_count, echo = TRUE, message=FALSE}
+
+data("instacart")
+n_aisle = 
+  instacart %>% 
+  count(aisle) %>% 
+  arrange(desc(n))
+
+head(n_aisle, 5)
+  
+```
+
+This tells us that what the most popular aisles are and how many items are ordered from each:
+
+* fresh vegetables with 150,609
+* fresh fruits with 150,473
+* packaged vegetables and fruits with 78,493
+* yogurt with 55,240
+* packaged cheese with 41,699
+
+### Describing the data
+
+The **instacart** data set has `r nrow(instacart)` observatoins and `r ncol(instacart)` variables. There are `r nrow(n_aisle)` aisles. 
+
+### Plot for aisles with more than 10,000 items ordered
+
+```{r, aisle plot, echo=FALSE}
+
+aisle_plot = 
+  n_aisle %>% 
+  filter(n > 10000) %>% 
+  mutate(
+    aisle = factor(aisle),
+    aisle = fct_reorder(aisle,n)) %>% 
+    ggplot(
+      aes(x = aisle, y = n)) +
+      labs(y = "Number of items ordered", x = "Aisle") +
+  geom_bar(stat = "identity", fill = "plum") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+aisle_plot
+
+ggsave("aisle_plot.pdf", aisle_plot, width = 10, height = 5)
+
+```
+
+This plot displays the aisles with over 10,000 items ordered along with the number of items ordered from each. The graph is ordered from least to greatest moving left to right. 
+
+
+### Most popular items from Baking Ingredients, Dog Food Care and Packaged Vegetables and Fruits
+
+```{r, three_aisles, echo = FALSE}
+
+popular_aisles = 
+  instacart %>% 
+  janitor::clean_names() %>% 
+  filter(aisle == c("baking ingredients", "dog food care", "packaged vegetables and fruits")) %>% 
+  group_by(aisle) %>% 
+  count(product_name) %>% 
+  rename("frequency" = n) %>% 
+  mutate(product_rank = min_rank(desc(frequency)),
+         product_name = tolower(product_name)) %>% 
+  filter(product_rank < 4) %>% 
+  arrange(aisle, product_rank)
+
+knitr::kable(popular_aisles, caption = "Three most popular items from aisles Baking Ingredients, Dog Food Care, and Packaged Vegetables and Fruits")
+
+```
+
+As we can see from the table, there is no information on items from the **packaged fruits vegetables** aisle. The three most popular items from **baking ingredients** are _light brown sugar_, _pure baking soda_ and _organic vanilla extract_. The three most popular items from **dog food care** are _organix grain free chicken & vegetable dog food_, _organix chicken & brown rice recipe_ and _original dry dog_. 
+
+### Information on Pink Lady Apples and Coffee Ice Cream
+
+The below table shows the mean hour of day when Pink Lady apples and coffee ice cream are ordered each day of the week. 
+
+```{r, apples_icecream, echo=FALSE, message=FALSE}
+
+mean_hour = 
+  instacart %>% 
+  mutate(product_name = tolower(product_name), 
+         order_dow = recode(order_dow,
+                                                                 "0" = "Monday",
+                                                                 "1" = "Tuesday",
+                                                                 "2" = "Wednesday",
+                                                                 "3" = "Thursday",
+                                                                 "4" = "Friday",
+                                                                 "5" = "Saturday",
+                                                                 "6" = "Sunday")) %>% 
+  filter(product_name %in% c("pink lady apple", "coffee ice cream")) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarize(hour = mean(order_hour_of_day)) %>% 
+  pivot_wider(names_from = order_dow, values_from = hour)
+
+       knitr::kable(mean_hour, digits = 0, caption = "Average hour of day when Pink Lady apples and coffee ice cream are ordered each day of the week")                                                   
+
+```
+
+
+
+
+
