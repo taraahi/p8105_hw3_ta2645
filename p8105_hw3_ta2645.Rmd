@@ -119,6 +119,133 @@ mean_hour =
 ```
 
 
+# Problem 2
+
+## BRFSS Data
+
+[ENTER DESCRIPTION]
+
+```{r, brfss, warning = FALSE}
+data("brfss_smart2010")
+
+cleaned_brfss = 
+  brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(topic == "Overall Health", response %in% c("Excellent", "Very Good", "Good", "Poor")) %>% 
+  mutate(response = factor(response, levels = c("Excellent", "Very Good", "Good", "Poor"))) %>% 
+  separate(locationdesc, c("state", "location", "rest")) %>% 
+  unite(location, c("location", "rest")) %>% 
+  arrange(response)
+
+cleaned_brfss
+```
+
+### States with seven or more locations in 2002 and 2010
+
+
+```{r, brfss_2002}
+brfss_2002 =
+  cleaned_brfss %>% 
+  filter(year == "2002") %>% 
+  group_by(state) %>% 
+  distinct(location) %>% 
+  count(state) %>% 
+  filter(n > 6)
+```
+
+[ADD DESCRIPTION FOR 2002]
+
+```{r, brfss_2010}
+brfss_2010 =
+  cleaned_brfss %>% 
+  filter(year == "2010") %>% 
+  group_by(state) %>% 
+  distinct(location) %>% 
+  count(state) %>% 
+  filter(n > 6)
+```
+
+[ADD DESCRIPTION FOR 2010]
+
+Spaghetti plot:
+
+```{r, warning=FALSE}
+cleaned_brfss %>% 
+  select(year, locationabbr, response, data_value, geo_location) %>% 
+  filter(response == "Excellent") %>% 
+  group_by(locationabbr, year) %>% 
+  mutate(data_avg = mean(data_value)) %>% 
+  select(year, locationabbr, data_avg) %>% 
+  
+  ggplot(aes(x = year, y = data_avg, group = locationabbr, color = locationabbr)) +
+  geom_line() +
+  theme(legend.position = "right")
+```
+
+
+Two panel plot:
+
+```{r, warning=FALSE}
+cleaned_brfss %>% 
+  filter(locationabbr == "NY", year %in% c("2006", "2010")) %>% 
+  ggplot(aes(x = response, y = data_value, color = response)) +
+  geom_boxplot() +
+  facet_grid(. ~ year)
+  
+```
 
 
 
+# Problem 3
+
+## Importing and Cleaning Accelerometer Data
+
+```{r, message=FALSE}
+
+accelerometer_df = read_csv("./data/accel_data.csv")
+
+cleaned_accel_df = 
+  accelerometer_df %>% 
+  pivot_longer(
+    cols = activity.1:activity.1440,
+    names_to = "activity_number",
+    values_to = "activity_counts",
+    names_prefix = "activity.") %>% 
+  mutate(weekend_day = (day == "Saturday" | day == "Sunday"))
+
+```
+
+[DESCRIPTION]
+
+```{r}
+total_activity = 
+  cleaned_accel_df %>% 
+  group_by(day_id) %>% 
+  summarize(total_activity_counts = sum(activity_counts))
+
+knitr::kable(total_activity)
+```
+
+```{r}
+ggplot(total_activity, aes(x = day_id, y = total_activity_counts)) +
+  geom_point() +
+  geom_col(position = "dodge") +
+  labs(title = "Total Daily Activity", x = "Day", y = "Activity")
+```
+
+[ADD DESCRIPTIONS]
+
+```{r, 24hr_activity, message=FALSE, warning=FALSE}
+
+cleaned_accel_df %>% 
+  mutate(activity_number = as.numeric(activity_number)) %>% 
+  group_by(day, activity_number) %>% 
+  summarize(avg_value = mean(activity_counts)) %>% 
+  ggplot(aes(x = activity_number, y = avg_value, color = day)) +
+  geom_smooth(se = FALSE) +
+  scale_x_discrete(limit = c(240,480,720,960,1440), labels = c("4","8","12","16","20","24")) +
+  labs(title = "Average Daily Activity Time Course", x = "Time Course (hrs)", y = "Average Activity", color = "Day of the Week")
+
+```
+
+[DESCRIPTION]
