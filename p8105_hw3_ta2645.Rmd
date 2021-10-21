@@ -123,7 +123,7 @@ mean_hour =
 
 ## BRFSS Data
 
-[ENTER DESCRIPTION]
+Here we are cleaning the BRFSS data by formatting it with variable names, narrowing to the "Overall Health" topic, looking at the "Excellent", "Very Good", "Good" and "Poor" responses, and ordering them appropriately. 
 
 ```{r, brfss, warning = FALSE}
 data("brfss_smart2010")
@@ -151,9 +151,11 @@ brfss_2002 =
   distinct(location) %>% 
   count(state) %>% 
   filter(n > 6)
+
+knitr::kable(brfss_2002)
 ```
 
-[ADD DESCRIPTION FOR 2002]
+The above table shows the states that had seven or more locations in 2002 (along with how many locations each has).
 
 ```{r, brfss_2010}
 brfss_2010 =
@@ -163,11 +165,15 @@ brfss_2010 =
   distinct(location) %>% 
   count(state) %>% 
   filter(n > 6)
+
+knitr::kable(brfss_2010)
 ```
 
-[ADD DESCRIPTION FOR 2010]
+The above table shows the states that had seven or more locations in 2010 (along with how many locations each has).
 
-Spaghetti plot:
+#### Spaghetti plot:
+
+The below plot shows the average value over time within a state from 2002 to 2010 (note: `group` was not used upon advice in office hours).
 
 ```{r, warning=FALSE}
 cleaned_brfss %>% 
@@ -183,7 +189,9 @@ cleaned_brfss %>%
 ```
 
 
-Two panel plot:
+#### Two panel plot:
+
+The below plot shows the distribution of `data_value` for responses _Poor_ to _Excellent_  among locations in New York for the years 2006 and 2010.
 
 ```{r, warning=FALSE}
 cleaned_brfss %>% 
@@ -200,6 +208,8 @@ cleaned_brfss %>%
 
 ## Importing and Cleaning Accelerometer Data
 
+Load, tidy and wrangle the data:
+
 ```{r, message=FALSE}
 
 accelerometer_df = read_csv("./data/accel_data.csv")
@@ -215,7 +225,8 @@ cleaned_accel_df =
 
 ```
 
-[DESCRIPTION]
+I have input useful variable names, created a weekend (vs weekday) variable, and encoded reasonable classes. 
+The cleaned data set contains **50,400** observations and **6** variables. The data contains a week number, day ID, day of the week, an activity number, activity count and whether or not the observation is on a weekend or not.
 
 ```{r}
 total_activity = 
@@ -226,6 +237,8 @@ total_activity =
 knitr::kable(total_activity)
 ```
 
+The table was not much help here so I created a bar graph to compare values, which is easier to read. There seems to be more consistent activity in the first half of the the time period, and a couple of low points are noted around day 24 and day 32, seen below.
+
 ```{r}
 ggplot(total_activity, aes(x = day_id, y = total_activity_counts)) +
   geom_point() +
@@ -233,7 +246,7 @@ ggplot(total_activity, aes(x = day_id, y = total_activity_counts)) +
   labs(title = "Total Daily Activity", x = "Day", y = "Activity")
 ```
 
-[ADD DESCRIPTIONS]
+We are now looking at activity over the course of the day by day of the week:
 
 ```{r, 24hr_activity, message=FALSE, warning=FALSE}
 
@@ -243,9 +256,11 @@ cleaned_accel_df %>%
   summarize(avg_value = mean(activity_counts)) %>% 
   ggplot(aes(x = activity_number, y = avg_value, color = day)) +
   geom_smooth(se = FALSE) +
-  scale_x_discrete(limit = c(240,480,720,960,1440), labels = c("4","8","12","16","20","24")) +
+  scale_x_discrete(limit = c(240,480,720,960,1200, 1440), labels = c("4","8","12","16","20","24")) +
   labs(title = "Average Daily Activity Time Course", x = "Time Course (hrs)", y = "Average Activity", color = "Day of the Week")
 
 ```
 
-[DESCRIPTION]
+It appears that overall, activity builds during the day up until about 10am where it plateaus, usually dropping off around 8pm. However, we see a peak of evening activity on Friday's and a peak of midday activity around noon on Sunday's, with Sundays also having the lowest activity at the end of the day. 
+
+**Fin**
